@@ -431,6 +431,42 @@ func TestCloseMultiple(t *testing.T) {
 	c.Close()
 }
 
+func BenchmarkExpireLRUAfterWrite(b *testing.B) {
+	b.ReportAllocs()
+	mockTime := newMockTime()
+	currentTime = mockTime.now
+	c := New(
+		WithExpireAfterWrite(10*time.Microsecond),
+		WithPolicy("lru"),
+		// WithMaximumSize(100),
+	)
+	defer c.Close()
+
+	type value struct {
+		ii float64
+	}
+
+	// New value
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		k := i
+		if b.N > 2 {
+			k = i % (b.N / 2)
+		}
+		v := &value{float64(i) * float64(i)}
+		if _, ok := c.GetIfPresent(k); !ok {
+			c.Put(k, v)
+		}
+	}
+	b.StopTimer()
+
+	runtime.GC()
+	time.Sleep(time.Second)
+	var st Stats
+	c.Stats(&st)
+	b.Log(st.String())
+}
+
 func BenchmarkGetSame(b *testing.B) {
 	c := New()
 	c.Put("*", "*")
