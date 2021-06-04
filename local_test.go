@@ -3,6 +3,7 @@ package cache
 import (
 	"errors"
 	"math/rand"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
