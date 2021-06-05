@@ -434,8 +434,8 @@ func TestCloseMultiple(t *testing.T) {
 
 func BenchmarkExpireLRUAfterWrite(b *testing.B) {
 	b.ReportAllocs()
-	mockTime := newMockTime()
-	currentTime = mockTime.now
+	// mockTime := newMockTime()
+	// currentTime = mockTime.now
 	c := New(
 		WithExpireAfterWrite(10*time.Microsecond),
 		WithPolicy("lru"),
@@ -446,6 +446,19 @@ func BenchmarkExpireLRUAfterWrite(b *testing.B) {
 	type value struct {
 		ii float64
 	}
+
+	for i := 0; i < 1000; i++ {
+		k := i
+		if b.N > 2 {
+			k = i % (b.N / 2)
+		}
+		v := &value{float64(i) * float64(i)}
+		if _, ok := c.GetIfPresent(k); !ok {
+			c.Put(k, v)
+		}
+	}
+
+	time.Sleep(time.Millisecond)
 
 	// New value
 	b.ResetTimer()
